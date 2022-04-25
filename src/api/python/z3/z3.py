@@ -2500,7 +2500,7 @@ class ArithRef(ExprRef):
         return ArithRef(Z3_mk_power(self.ctx_ref(), b.as_ast(), a.as_ast()), self.ctx)
 
     def __div__(self, other):
-        """Create the Z3 expression `other/self`.
+        """Create the Z3 expression `self/other`.
 
         >>> x = Int('x')
         >>> y = Int('y')
@@ -2523,7 +2523,7 @@ class ArithRef(ExprRef):
         return ArithRef(Z3_mk_div(self.ctx_ref(), a.as_ast(), b.as_ast()), self.ctx)
 
     def __truediv__(self, other):
-        """Create the Z3 expression `other/self`."""
+        """Create the Z3 expression `self/other`."""
         return self.__div__(other)
 
     def __rdiv__(self, other):
@@ -2548,7 +2548,7 @@ class ArithRef(ExprRef):
         return self.__rdiv__(other)
 
     def __mod__(self, other):
-        """Create the Z3 expression `other%self`.
+        """Create the Z3 expression `self%other`.
 
         >>> x = Int('x')
         >>> y = Int('y')
@@ -4519,7 +4519,7 @@ class ArraySortRef(SortRef):
         """Return the domain of the array sort `self`.
         """
         return _to_sort_ref(Z3_get_array_sort_domain_n(self.ctx_ref(), self.ast, i), self.ctx)
-    
+
     def range(self):
         """Return the range of the array sort `self`.
 
@@ -4588,7 +4588,7 @@ def _array_select(ar, arg):
     arg = ar.domain().cast(arg)
     return _to_expr_ref(Z3_mk_select(ar.ctx_ref(), ar.as_ast(), arg.as_ast()), ar.ctx)
 
-    
+
 def is_array_sort(a):
     return Z3_get_sort_kind(a.ctx.ref(), Z3_get_sort(a.ctx.ref(), a.ast)) == Z3_ARRAY_SORT
 
@@ -6625,7 +6625,7 @@ class ModelRef(Z3PPObject):
                 n = Z3_func_entry_get_num_args(x.ctx_ref(), e.entry)
                 v = AstVector()
                 for j in range(n):
-                    v.push(entry.arg_value(j))                    
+                    v.push(entry.arg_value(j))
                 val = Z3_func_entry_get_value(x.ctx_ref(), e.entry)
                 Z3_func_interp_add_entry(x.ctx_ref(), fi2.f, v.vector, val)
             return
@@ -8854,7 +8854,7 @@ def Product(*args):
 def Abs(arg):
     """Create the absolute value of an arithmetic expression"""
     return If(arg > 0, arg, -arg)
-    
+
 
 def AtMost(*args):
     """Create an at-most Pseudo-Boolean k constraint.
@@ -10728,7 +10728,7 @@ def _coerce_char(ch, ctx=None):
         ctx = _get_ctx(ctx)
         ch = CharVal(ch, ctx)
     if not is_expr(ch):
-        raise Z3Exception("Character expression expected")    
+        raise Z3Exception("Character expression expected")
     return ch
 
 class CharRef(ExprRef):
@@ -10755,7 +10755,7 @@ def CharVal(ch, ctx=None):
     if not isinstance(ch, int):
         raise Z3Exception("character value should be an ordinal")
     return _to_expr_ref(Z3_mk_char(ctx.ref(), ch), ctx)
-    
+
 def CharFromBv(ch, ctx=None):
     if not is_expr(ch):
         raise Z3Expression("Bit-vector expression needed")
@@ -11032,7 +11032,7 @@ def StrFromCode(c):
     if not is_expr(c):
         c = _py2expr(c)
     return SeqRef(Z3_mk_string_from_code(c.ctx_ref(), c.as_ast()), c.ctx)
-    
+
 def Re(s, ctx=None):
     """The regular expression that accepts sequence 's'
     >>> s1 = Re("ab")
@@ -11245,7 +11245,7 @@ class PropClosures:
             with self.lock:
                 r = self.bases[ctx]
         else:
-            r = self.bases[ctx]            
+            r = self.bases[ctx]
         return r
 
     def set(self, ctx, r):

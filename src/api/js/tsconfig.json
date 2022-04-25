@@ -6,6 +6,7 @@
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "noImplicitAny": true,
     "skipLibCheck": true
   },
   "exclude": [

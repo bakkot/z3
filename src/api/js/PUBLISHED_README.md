@@ -1,6 +1,6 @@
 # Z3 TypeScript Bindings
 
-This project provides low-level TypeScript bindings for the [Z3 theorem prover](https://github.com/Z3Prover/z3). It is available on npm as [z3-solver](https://www.npmjs.com/package/z3-solver).
+This project provides TypeScript bindings for the [Z3 theorem prover](https://github.com/Z3Prover/z3). It is available on npm as [z3-solver](https://www.npmjs.com/package/z3-solver).
 
 Z3 itself is distributed as a wasm artifact as part of this package. You can find the documentation for the Z3 API [here](https://z3prover.github.io/api/html/z3__api_8h.html), though note the differences below.
 
@@ -13,12 +13,16 @@ The Emscripten worker model will spawn multiple instances of `z3-built.js` for l
 
 Other than the differences below, the bindings can be used exactly as you'd use the C library. Because this is a wrapper around a C library, most of the values you'll use are just numbers representing pointers. For this reason you are strongly encouraged to make use of the TypeScript types to differentiate among the different kinds of value.
 
-The module exports an `init` function, is an async function which initializes the library and returns `{ em, Z3 }` - `em` contains the underlying emscripten module, which you can use to e.g. kill stray threads, and `Z3` contains the actual bindings. The other module exports are the enums defined in the Z3 API.
+The module exports an `init` function, is an async function which initializes the library and returns `{ em, Z3, API }` - `em` contains the underlying emscripten module, which you can use to e.g. kill stray threads, `Z3` contains typed wrappers around the full, low-level Z3 C API, and `API` contains high-level wrappers around part of the low-level API following roughly the style you may be familiar with from the Python Z3 library. The other module exports are the enums defined in the Z3 API.
 
 [`test-ts-api.ts`](./test-ts-api.ts) contains a couple real cases translated very mechanically from [this file](https://github.com/Z3Prover/z3/blob/90fd3d82fce20d45ed2eececdf65545bab769503/examples/c/test_capi.c).
 
+[`example-raw.ts`](./example-raw.ts) demonstrates some of various behaviors of the low-level bindings. [`example-api.ts`](./example-api.ts) demonstrates a real-world use of the high-level bindings to solve a Sudoku variant.
+
 
 ## Differences from the C API
+
+This section is about the low-level `Z3` object, not the high-level `API`.
 
 ### Integers
 
