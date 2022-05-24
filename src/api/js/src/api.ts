@@ -85,17 +85,17 @@ In particular, as used below, the callback must not refer to `this`.
 
 */
 
-declare class Context {
+export interface Context {
   __brand: 'Context';
   readonly ptr: Z3_context;
-  constructor();
 }
-export type { Context };
+export interface ContextCtor {
+  new (): Context;
+}
 
-declare class Solver {
+export interface Solver {
   __brand: 'Solver';
   readonly ptr: Z3_solver;
-  constructor(ctx?: Context);
   add: (...args: BoolExpr[]) => void;
   assertExprs: (...args: BoolExpr[]) => void;
   check: (...assumptions: BoolExpr[]) => Promise<'sat' | 'unsat' | 'unknown'>;
@@ -103,51 +103,56 @@ declare class Solver {
   help: () => string;
   toString: () => string;
 }
-export type { Solver };
+export interface SolverCtor {
+  new (ctx?: Context): Solver;
+}
 
-declare class Model implements Iterable<FuncDecl> {
+export interface Model extends Iterable<FuncDecl> {
   __brand: 'Model';
   readonly ptr: Z3_model;
-  constructor(m: Z3_model, ctx?: Context);
   length: () => number;
   [Symbol.iterator]: () => Iterator<FuncDecl>;
   getInterp: (decl: FuncDecl) => Expr | FuncInterp | null;
   evaluate: (t: Expr, modelCompletion?: boolean) => ArithExpr;
 }
-export type { Model };
+export interface ModelCtor {
+  new (m: Z3_model, ctx?: Context): Model;
+}
 
-declare class FuncInterp {
+export interface FuncInterp {
   __brand: 'FuncInterp';
   readonly ptr: Z3_func_interp;
   readonly ctx: Context;
-  constructor(f: Z3_func_interp, ctx?: Context);
 }
-export type { FuncInterp };
+export interface FuncInterpCtor {
+  new (f: Z3_func_interp, ctx?: Context): FuncInterp;
+}
 
-declare class AST {
+export interface AST {
   __brand: 'AST' | FuncDecl['__brand'] | Expr['__brand'] | Sort['__brand'];
   readonly ptr: Z3_ast;
   readonly ctx: Context;
-  constructor(ast: Z3_ast, ctx?: Context);
   toString: () => string;
   astKind: () => Z3_ast_kind;
 }
-export type { AST };
+export interface ASTCtor {
+  new (ast: Z3_ast, ctx?: Context): AST;
+}
 
-declare class FuncDecl extends AST {
+export interface FuncDecl extends AST {
   __brand: 'FuncDecl';
   readonly ptr: Z3_func_decl;
   arity: () => number;
   name: () => string;
   declKind: () => Z3_decl_kind;
 }
-export type { FuncDecl };
+export interface FuncDeclCtor extends ASTCtor {
+  // TODO it would be good to have specialized sub-types for the AST pointers
+  new (ast: Z3_ast, ctx?: Context): FuncDecl;
+}
 
-declare class Expr extends AST {
+export interface Expr extends AST {
   __brand: 'Expr' | ArithExpr['__brand'];
-  static from(a: boolean, ctx?: Context): BoolExpr;
-  static from(a: number, ctx?: Context): IntNumeralExpr;
-  static from(a: CoercibleToExpr, ctx?: Context): Expr;
   eq: (other: CoercibleToExpr) => BoolExpr;
   neq: (other: CoercibleToExpr) => BoolExpr;
   sort: () => Sort;
@@ -156,9 +161,15 @@ declare class Expr extends AST {
   arg: (idx: number) => Expr;
   children: () => Expr[];
 }
-export type { Expr };
+export interface ExprCtor extends ASTCtor {
+  from(a: boolean, ctx?: Context): BoolExpr;
+  from(a: number, ctx?: Context): IntNumeralExpr;
+  from(a: CoercibleToExpr, ctx?: Context): Expr;
+  new (ast: Z3_ast, ctx?: Context): Expr;
+}
+type _Expr = Expr;
 
-declare class ArithExpr extends Expr {
+export interface ArithExpr extends Expr {
   __brand: 'ArithExpr' | IntNumeralExpr['__brand'] | BoolExpr['__brand'];
   neg: () => ArithExpr;
   add: (other: ArithExpr | number) => ArithExpr;
@@ -173,15 +184,19 @@ declare class ArithExpr extends Expr {
   gt: (other: ArithExpr | number) => BoolExpr;
   toString: () => string;
 }
-export type { ArithExpr };
+export interface ArithExprCtor extends ExprCtor {
+  new (ast: Z3_ast, ctx?: Context): ArithExpr;
+}
 type _ArithExpr = ArithExpr;
 
-declare class IntNumeralExpr extends ArithExpr {
+export interface IntNumeralExpr extends ArithExpr {
   __brand: 'IntNumeralExpr';
 }
-export type { IntNumeralExpr };
+export interface IntNumeralExprCtor extends ArithExprCtor {
+  new (ast: Z3_ast, ctx?: Context): IntNumeralExpr;
+}
 
-declare class BoolExpr extends ArithExpr {
+export interface BoolExpr extends ArithExpr {
   __brand: 'BoolExpr';
   not: () => BoolExpr;
   iff: (other: BoolExpr | boolean) => BoolExpr;
@@ -190,38 +205,49 @@ declare class BoolExpr extends ArithExpr {
   and: (other: BoolExpr | boolean) => BoolExpr;
   or: (other: BoolExpr | boolean) => BoolExpr;
 }
-export type { BoolExpr };
+export interface BoolExprCtor extends ArithExprCtor {
+  new (ast: Z3_ast, ctx?: Context): BoolExpr;
+}
 type _BoolExpr = BoolExpr;
 
-declare class Sort extends AST {
-  __brand: 'Sort' | ArithSort['__brand'];
+export interface Sort extends AST {
+  __brand: 'Sort' | BoolSort['__brand'] | ArithSort['__brand'];
   readonly ptr: Z3_sort;
   eq: (other: Sort) => boolean;
 }
-export type { Sort };
-
-declare class ArithSort extends Sort {
-  __brand: 'ArithSort' | BoolSort['__brand'] | IntSort['__brand'];
+export interface SortCtor extends ASTCtor {
+  new (ast: Z3_ast, ctx?: Context): Sort;
 }
-export type { ArithSort };
 
-declare class BoolSort extends AST {
+export interface ArithSort extends Sort {
+  __brand: 'ArithSort' | IntSort['__brand'];
+}
+export interface ArithSortCtor extends ASTCtor {
+  new (ast: Z3_ast, ctx?: Context): ArithSort;
+}
+
+export interface BoolSort extends Sort {
+  // todo why not ArithSort?
   __brand: 'BoolSort';
 }
-export type { BoolSort };
+export interface BoolSortCtor extends SortCtor {
+  new (ast: Z3_ast, ctx?: Context): BoolSort;
+}
 
-declare class IntSort extends AST {
+export interface IntSort extends ArithSort {
   __brand: 'IntSort';
 }
-export type { IntSort };
+export interface IntSortCtor extends ArithSortCtor {
+  new (ast: Z3_ast, ctx?: Context): IntSort;
+}
 
 export type CoercibleToExpr = boolean | number | Expr;
 
 type API = {
-  Context: typeof Context;
-  Solver: typeof Solver;
-  Model: typeof Model;
-  Expr: typeof Expr;
+  Context: ContextCtor;
+  Solver: SolverCtor;
+  Model: ModelCtor;
+  Expr: ExprCtor;
   Int: (name: string, ctx?: Context) => ArithExpr;
   FreshInt: (name: string, ctx?: Context) => ArithExpr;
   Bool: (name: string, ctx?: Context) => BoolExpr;
@@ -230,7 +256,9 @@ type API = {
   evalSmtlib2String: (command: string, ctx?: Context) => Promise<string>;
 };
 
-export function makeAPI(Z3: Awaited<ReturnType<typeof import('../build/wrapper')['init']>>['Z3']): API {
+type Z3 = Awaited<ReturnType<typeof import('../build/wrapper')['init']>>['Z3'];
+export function makeAPI(Z3: Z3): API {
+  // @ts-ignore I promise FinalizationRegistry is a thing
   let cleanupRegistry = new FinalizationRegistry<() => void>(thunk => {
     // console.log('cleaning up');
     thunk();
@@ -285,18 +313,18 @@ export function makeAPI(Z3: Awaited<ReturnType<typeof import('../build/wrapper')
       cleanupRegistry.register(this, () => Z3.solver_dec_ref(ctx.ptr, solver));
     }
 
-    add(...args: BoolExpr[]) {
+    add(...args: _BoolExpr[]) {
       this.assertExprs(...args);
     }
 
-    assertExprs(...args: BoolExpr[]) {
+    assertExprs(...args: _BoolExpr[]) {
       for (let arg of args) {
         Z3.solver_assert(this.ctx.ptr, this.ptr, arg.ptr);
         throwIfError(this.ctx);
       }
     }
 
-    async check(...assumptions: BoolExpr[]) {
+    async check(...assumptions: _BoolExpr[]) {
       let r = await Z3.solver_check_assumptions(
         this.ctx.ptr,
         this.ptr,
@@ -392,7 +420,7 @@ export function makeAPI(Z3: Awaited<ReturnType<typeof import('../build/wrapper')
       }
     }
 
-    evaluate(t: Expr, modelCompletion = false) {
+    evaluate(t: _Expr, modelCompletion = false) {
       let out = Z3.model_eval(this.ctx.ptr, this.ptr, t.ptr, modelCompletion);
       throwIfError(this.ctx);
       if (out == null) {
@@ -884,8 +912,8 @@ export function makeAPI(Z3: Awaited<ReturnType<typeof import('../build/wrapper')
 
   return {
     Context,
-    Solver: Solver as API['Solver'],
-    Model: Model as API['Model'],
+    Solver,
+    Model,
     Expr,
     Int,
     FreshInt,
