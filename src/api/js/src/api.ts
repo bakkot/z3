@@ -85,179 +85,188 @@ In particular, as used below, the callback must not refer to `this`.
 
 */
 
-export interface Context {
+export interface Context<ContextName extends string> {
   __brand: 'Context';
   readonly ptr: Z3_context;
 }
-export interface ContextCtor {
-  new (): Context;
+export interface ContextCtor<ContextName extends string> {
+  new (): Context<ContextName>;
 }
 
-export interface Solver {
+export interface Solver<ContextName extends string> {
   __brand: 'Solver';
   readonly ptr: Z3_solver;
-  add: (...args: BoolExpr[]) => void;
-  assertExprs: (...args: BoolExpr[]) => void;
-  check: (...assumptions: BoolExpr[]) => Promise<'sat' | 'unsat' | 'unknown'>;
-  model: () => Model;
+  add: (...args: BoolExpr<ContextName>[]) => void;
+  assertExprs: (...args: BoolExpr<ContextName>[]) => void;
+  check: (...assumptions: BoolExpr<ContextName>[]) => Promise<'sat' | 'unsat' | 'unknown'>;
+  model: () => Model<ContextName>;
   help: () => string;
   toString: () => string;
 }
-export interface SolverCtor {
-  new (ctx?: Context): Solver;
+export interface SolverCtor<ContextName extends string> {
+  new (ctx?: Context<ContextName>): Solver<ContextName>;
 }
 
-export interface Model extends Iterable<FuncDecl> {
+export interface Model<ContextName extends string> extends Iterable<FuncDecl<ContextName>> {
   __brand: 'Model';
   readonly ptr: Z3_model;
   length: () => number;
-  [Symbol.iterator]: () => Iterator<FuncDecl>;
-  getInterp: (decl: FuncDecl) => Expr | FuncInterp | null;
-  evaluate: (t: Expr, modelCompletion?: boolean) => ArithExpr;
+  [Symbol.iterator]: () => Iterator<FuncDecl<ContextName>>;
+  getInterp: (decl: FuncDecl<ContextName>) => Expr<ContextName> | FuncInterp<ContextName> | null;
+  evaluate: (t: Expr<ContextName>, modelCompletion?: boolean) => ArithExpr<ContextName>;
 }
-export interface ModelCtor {
-  new (m: Z3_model, ctx?: Context): Model;
+export interface ModelCtor<ContextName extends string> {
+  new (m: Z3_model, ctx?: Context<ContextName>): Model<ContextName>;
 }
 
-export interface FuncInterp {
+export interface FuncInterp<ContextName extends string> {
   __brand: 'FuncInterp';
   readonly ptr: Z3_func_interp;
-  readonly ctx: Context;
+  readonly ctx: Context<ContextName>;
 }
-export interface FuncInterpCtor {
-  new (f: Z3_func_interp, ctx?: Context): FuncInterp;
+export interface FuncInterpCtor<ContextName extends string> {
+  new (f: Z3_func_interp, ctx?: Context<ContextName>): FuncInterp<ContextName>;
 }
 
-export interface AST {
-  __brand: 'AST' | FuncDecl['__brand'] | Expr['__brand'] | Sort['__brand'];
+export interface AST<ContextName extends string> {
+  __brand:
+    | 'AST'
+    | FuncDecl<ContextName>['__brand']
+    | Expr<ContextName>['__brand']
+    | Sort<ContextName>['__brand'];
   readonly ptr: Z3_ast;
-  readonly ctx: Context;
+  readonly ctx: Context<ContextName>;
   toString: () => string;
   astKind: () => Z3_ast_kind;
 }
-export interface ASTCtor {
-  new (ast: Z3_ast, ctx?: Context): AST;
+export interface ASTCtor<ContextName extends string> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): AST<ContextName>;
 }
 
-export interface FuncDecl extends AST {
+export interface FuncDecl<ContextName extends string> extends AST<ContextName> {
   __brand: 'FuncDecl';
   readonly ptr: Z3_func_decl;
   arity: () => number;
   name: () => string;
   declKind: () => Z3_decl_kind;
 }
-export interface FuncDeclCtor extends ASTCtor {
+export interface FuncDeclCtor<ContextName extends string> {
   // TODO it would be good to have specialized sub-types for the AST pointers
-  new (ast: Z3_ast, ctx?: Context): FuncDecl;
+  new (ast: Z3_ast, ctx?: Context<ContextName>): FuncDecl<ContextName>;
 }
 
-export interface Expr extends AST {
-  __brand: 'Expr' | ArithExpr['__brand'];
-  eq: (other: CoercibleToExpr) => BoolExpr;
-  neq: (other: CoercibleToExpr) => BoolExpr;
-  sort: () => Sort;
-  decl: () => FuncDecl;
+export interface Expr<ContextName extends string> extends AST<ContextName> {
+  __brand: 'Expr' | ArithExpr<ContextName>['__brand'];
+  eq: (other: CoercibleToExpr<ContextName>) => BoolExpr<ContextName>;
+  neq: (other: CoercibleToExpr<ContextName>) => BoolExpr<ContextName>;
+  sort: () => Sort<ContextName>;
+  decl: () => FuncDecl<ContextName>;
   numArgs: () => number;
-  arg: (idx: number) => Expr;
-  children: () => Expr[];
+  arg: (idx: number) => Expr<ContextName>;
+  children: () => Expr<ContextName>[];
 }
-export interface ExprCtor extends ASTCtor {
-  from(a: boolean, ctx?: Context): BoolExpr;
-  from(a: number, ctx?: Context): IntNumeralExpr;
-  from(a: CoercibleToExpr, ctx?: Context): Expr;
-  new (ast: Z3_ast, ctx?: Context): Expr;
+export interface ExprStatics<ContextName extends string> {
+  from(a: boolean, ctx?: Context<ContextName>): BoolExpr<ContextName>;
+  from(a: number, ctx?: Context<ContextName>): IntNumeralExpr<ContextName>;
+  from(a: CoercibleToExpr<ContextName>, ctx?: Context<ContextName>): Expr<ContextName>;
 }
-type _Expr = Expr;
+export interface ExprCtor<ContextName extends string> extends ExprStatics<ContextName> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): Expr<ContextName>;
+}
 
-export interface ArithExpr extends Expr {
-  __brand: 'ArithExpr' | IntNumeralExpr['__brand'] | BoolExpr['__brand'];
-  neg: () => ArithExpr;
-  add: (other: ArithExpr | number) => ArithExpr;
-  sub: (other: ArithExpr | number) => ArithExpr;
-  mul: (other: ArithExpr | number) => ArithExpr;
-  div: (other: ArithExpr | number) => ArithExpr;
-  mod: (other: ArithExpr | number) => ArithExpr;
-  pow: (other: ArithExpr | number) => ArithExpr;
-  le: (other: ArithExpr | number) => BoolExpr;
-  lt: (other: ArithExpr | number) => BoolExpr;
-  ge: (other: ArithExpr | number) => BoolExpr;
-  gt: (other: ArithExpr | number) => BoolExpr;
+export interface ArithExpr<ContextName extends string> extends Expr<ContextName> {
+  __brand: 'ArithExpr' | IntNumeralExpr<ContextName>['__brand'] | BoolExpr<ContextName>['__brand'];
+  neg: () => ArithExpr<ContextName>;
+  add: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
+  sub: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
+  mul: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
+  div: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
+  mod: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
+  pow: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
+  le: (other: ArithExpr<ContextName> | number) => BoolExpr<ContextName>;
+  lt: (other: ArithExpr<ContextName> | number) => BoolExpr<ContextName>;
+  ge: (other: ArithExpr<ContextName> | number) => BoolExpr<ContextName>;
+  gt: (other: ArithExpr<ContextName> | number) => BoolExpr<ContextName>;
   toString: () => string;
 }
-export interface ArithExprCtor extends ExprCtor {
-  new (ast: Z3_ast, ctx?: Context): ArithExpr;
+export interface ArithExprCtor<ContextName extends string> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): ArithExpr<ContextName>;
 }
-type _ArithExpr = ArithExpr;
 
-export interface IntNumeralExpr extends ArithExpr {
+export interface IntNumeralExpr<ContextName extends string> extends ArithExpr<ContextName> {
   __brand: 'IntNumeralExpr';
 }
-export interface IntNumeralExprCtor extends ArithExprCtor {
-  new (ast: Z3_ast, ctx?: Context): IntNumeralExpr;
+export interface IntNumeralExprCtor<ContextName extends string> extends ArithExprCtor<ContextName> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): IntNumeralExpr<ContextName>;
 }
+type _IntNumeralExpr<ContextName extends string> = IntNumeralExpr<ContextName>;
 
-export interface BoolExpr extends ArithExpr {
+export interface BoolExpr<ContextName extends string> extends ArithExpr<ContextName> {
   __brand: 'BoolExpr';
-  not: () => BoolExpr;
-  iff: (other: BoolExpr | boolean) => BoolExpr;
-  implies: (other: BoolExpr | boolean) => BoolExpr;
-  xor: (other: BoolExpr | boolean) => BoolExpr;
-  and: (other: BoolExpr | boolean) => BoolExpr;
-  or: (other: BoolExpr | boolean) => BoolExpr;
+  not: () => BoolExpr<ContextName>;
+  iff: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
+  implies: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
+  xor: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
+  and: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
+  or: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
 }
-export interface BoolExprCtor extends ArithExprCtor {
-  new (ast: Z3_ast, ctx?: Context): BoolExpr;
+export interface BoolExprCtor<ContextName extends string> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): BoolExpr<ContextName>;
 }
-type _BoolExpr = BoolExpr;
+type _BoolExpr<ContextName extends string> = BoolExpr<ContextName>;
 
-export interface Sort extends AST {
-  __brand: 'Sort' | BoolSort['__brand'] | ArithSort['__brand'];
+export interface Sort<ContextName extends string> extends AST<ContextName> {
+  __brand: 'Sort' | BoolSort<ContextName>['__brand'] | ArithSort<ContextName>['__brand'];
   readonly ptr: Z3_sort;
-  eq: (other: Sort) => boolean;
+  eq: (other: Sort<ContextName>) => boolean;
 }
-export interface SortCtor extends ASTCtor {
-  new (ast: Z3_ast, ctx?: Context): Sort;
-}
-
-export interface ArithSort extends Sort {
-  __brand: 'ArithSort' | IntSort['__brand'];
-}
-export interface ArithSortCtor extends ASTCtor {
-  new (ast: Z3_ast, ctx?: Context): ArithSort;
+export interface SortCtor<ContextName extends string> {
+  new (ast: Z3_sort, ctx?: Context<ContextName>): Sort<ContextName>;
 }
 
-export interface BoolSort extends Sort {
-  // todo why not ArithSort?
+export interface ArithSort<ContextName extends string> extends Sort<ContextName> {
+  __brand: 'ArithSort' | IntSort<ContextName>['__brand'];
+}
+export interface ArithSortCtor<ContextName extends string> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): ArithSort<ContextName>;
+}
+
+// todo why does this not extend ArithSort?
+export interface BoolSort<ContextName extends string> extends Sort<ContextName> {
   __brand: 'BoolSort';
 }
-export interface BoolSortCtor extends SortCtor {
-  new (ast: Z3_ast, ctx?: Context): BoolSort;
+export interface BoolSortCtor<ContextName extends string> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): BoolSort<ContextName>;
 }
 
-export interface IntSort extends ArithSort {
+export interface IntSort<ContextName extends string> extends ArithSort<ContextName> {
   __brand: 'IntSort';
 }
-export interface IntSortCtor extends ArithSortCtor {
-  new (ast: Z3_ast, ctx?: Context): IntSort;
+export interface IntSortCtor<ContextName extends string> {
+  new (ast: Z3_ast, ctx?: Context<ContextName>): IntSort<ContextName>;
 }
 
-export type CoercibleToExpr = boolean | number | Expr;
+export type CoercibleToExpr<ContextName extends string> = boolean | number | Expr<ContextName>;
 
-type API = {
-  Context: ContextCtor;
-  Solver: SolverCtor;
-  Model: ModelCtor;
-  Expr: ExprCtor;
-  Int: (name: string, ctx?: Context) => ArithExpr;
-  FreshInt: (name: string, ctx?: Context) => ArithExpr;
-  Bool: (name: string, ctx?: Context) => BoolExpr;
-  Distinct: (...args: CoercibleToExpr[]) => BoolExpr;
-  If: (test: BoolExpr, consequent: ArithExpr, alternate: ArithExpr) => ArithExpr;
-  evalSmtlib2String: (command: string, ctx?: Context) => Promise<string>;
+type API<ContextName extends string> = {
+  Context: ContextCtor<ContextName>;
+  Solver: SolverCtor<ContextName>;
+  Model: ModelCtor<ContextName>;
+  Expr: ExprCtor<ContextName>;
+  Int: (name: string, ctx?: Context<ContextName>) => ArithExpr<ContextName>;
+  FreshInt: (name: string, ctx?: Context<ContextName>) => ArithExpr<ContextName>;
+  Bool: (name: string, ctx?: Context<ContextName>) => BoolExpr<ContextName>;
+  Distinct: (...args: CoercibleToExpr<ContextName>[]) => BoolExpr<ContextName>;
+  If: (
+    test: BoolExpr<ContextName>,
+    consequent: ArithExpr<ContextName>,
+    alternate: ArithExpr<ContextName>,
+  ) => ArithExpr<ContextName>;
+  evalSmtlib2String: (command: string, ctx?: Context<ContextName>) => Promise<string>;
 };
 
 type Z3 = Awaited<ReturnType<typeof import('../build/wrapper')['init']>>['Z3'];
-export function makeAPI(Z3: Z3): API {
+export function makeAPI(Z3: Z3): API<'TODO'> {
   // @ts-ignore I promise FinalizationRegistry is a thing
   let cleanupRegistry = new FinalizationRegistry<() => void>(thunk => {
     // console.log('cleaning up');
@@ -265,7 +274,7 @@ export function makeAPI(Z3: Z3): API {
   });
 
   // Global Z3 context
-  let _mainCtx: Context | null = null;
+  let _mainCtx: Context<'TODO'> | null = null;
 
   function mainCtx() {
     if (_mainCtx === null) {
@@ -275,15 +284,14 @@ export function makeAPI(Z3: Z3): API {
   }
 
   // call this after every nontrivial call to the underlying API
-  function throwIfError(ctx: Context) {
+  function throwIfError(ctx: Context<'TODO'>) {
     if (Z3.get_error_code(ctx.ptr) !== Z3_error_code.Z3_OK) {
       throw new Error(Z3.get_error_msg(ctx.ptr, Z3.get_error_code(ctx.ptr)));
     }
   }
 
-  class Context {
+  const Context = class Context {
     declare __brand: 'Context';
-
     declare ptr: Z3_context;
     constructor() {
       let conf = Z3.mk_config();
@@ -297,12 +305,12 @@ export function makeAPI(Z3: Z3): API {
       // TODO lint rule against `this` in the thunk
       cleanupRegistry.register(this, () => Z3.del_context(ptr));
     }
-  }
+  };
 
-  class Solver {
+  const Solver = class Solver {
     declare __brand: 'Solver';
 
-    declare ctx: Context;
+    declare ctx: Context<'TODO'>;
     declare ptr: Z3_solver;
     constructor(ctx = mainCtx()) {
       let solver = Z3.mk_solver(ctx.ptr);
@@ -313,18 +321,18 @@ export function makeAPI(Z3: Z3): API {
       cleanupRegistry.register(this, () => Z3.solver_dec_ref(ctx.ptr, solver));
     }
 
-    add(...args: _BoolExpr[]) {
+    add(...args: BoolExpr<'TODO'>[]) {
       this.assertExprs(...args);
     }
 
-    assertExprs(...args: _BoolExpr[]) {
+    assertExprs(...args: BoolExpr<'TODO'>[]) {
       for (let arg of args) {
         Z3.solver_assert(this.ctx.ptr, this.ptr, arg.ptr);
         throwIfError(this.ctx);
       }
     }
 
-    async check(...assumptions: _BoolExpr[]) {
+    async check(...assumptions: BoolExpr<'TODO'>[]) {
       let r = await Z3.solver_check_assumptions(
         this.ctx.ptr,
         this.ptr,
@@ -358,13 +366,13 @@ export function makeAPI(Z3: Z3): API {
     toString() {
       return Z3.solver_to_string(this.ctx.ptr, this.ptr);
     }
-  }
+  };
 
-  class Model {
+  const Model = class Model {
     declare __brand: 'Model';
 
     declare ptr: Z3_model;
-    declare ctx: Context;
+    declare ctx: Context<'TODO'>;
     constructor(m: Z3_model, ctx = mainCtx()) {
       this.ptr = m;
       this.ctx = ctx;
@@ -397,7 +405,7 @@ export function makeAPI(Z3: Z3): API {
       }
     }
 
-    getInterp(decl: FuncDecl): Expr | FuncInterp | null {
+    getInterp(decl: FuncDecl<'TODO'>): Expr<'TODO'> | FuncInterp<'TODO'> | null {
       if (decl.arity() === 0) {
         let _r = Z3.model_get_const_interp(this.ctx.ptr, this.ptr, decl.ptr);
         throwIfError(this.ctx);
@@ -420,7 +428,7 @@ export function makeAPI(Z3: Z3): API {
       }
     }
 
-    evaluate(t: _Expr, modelCompletion = false) {
+    evaluate(t: Expr<'TODO'>, modelCompletion = false) {
       let out = Z3.model_eval(this.ctx.ptr, this.ptr, t.ptr, modelCompletion);
       throwIfError(this.ctx);
       if (out == null) {
@@ -428,25 +436,29 @@ export function makeAPI(Z3: Z3): API {
       }
       return astPtrToExpr(out, this.ctx);
     }
-  }
+  };
 
-  class FuncInterp {
+  const FuncInterp = class FuncInterp {
     declare __brand: 'FuncInterp';
 
     declare ptr: Z3_func_interp;
-    declare ctx: Context;
+    declare ctx: Context<'TODO'>;
     constructor(f: Z3_func_interp, ctx = mainCtx()) {
       this.ptr = f;
       this.ctx = ctx;
     }
-  }
+  };
 
-  class AST {
-    declare __brand: 'AST' | FuncDecl['__brand'] | Expr['__brand'] | Sort['__brand'];
+  const AST = class AST {
+    declare __brand:
+      | 'AST'
+      | FuncDecl<'TODO'>['__brand']
+      | Expr<'TODO'>['__brand']
+      | Sort<'TODO'>['__brand'];
 
     declare ptr: Z3_ast;
-    declare ctx: Context;
-    constructor(ast: Z3_ast, ctx: Context = mainCtx()) {
+    declare ctx: Context<'TODO'>;
+    constructor(ast: Z3_ast, ctx: Context<'TODO'> = mainCtx()) {
       Z3.inc_ref(ctx.ptr, ast);
       this.ptr = ast;
       this.ctx = ctx;
@@ -468,9 +480,9 @@ export function makeAPI(Z3: Z3): API {
       throwIfError(this.ctx);
       return out;
     }
-  }
+  };
 
-  class FuncDecl extends AST {
+  const FuncDecl = class FuncDecl extends AST {
     declare __brand: 'FuncDecl';
 
     declare ptr: Z3_func_decl;
@@ -495,15 +507,16 @@ export function makeAPI(Z3: Z3): API {
       throwIfError(this.ctx);
       return kind;
     }
-  }
+  };
 
-  class Expr extends AST {
-    declare __brand: 'Expr' | ArithExpr['__brand'];
+  type _Expr<ContextName extends string> = Expr<ContextName>;
+  const Expr = class Expr extends AST {
+    declare __brand: 'Expr' | ArithExpr<'TODO'>['__brand'];
 
-    static from(a: boolean, ctx?: Context): BoolExpr;
-    static from(a: number, ctx?: Context): IntNumeralExpr;
-    static from(a: CoercibleToExpr, ctx?: Context): Expr;
-    static from(a: CoercibleToExpr, ctx = mainCtx()): Expr {
+    static from(a: boolean, ctx?: Context<'TODO'>): BoolExpr<'TODO'>;
+    static from(a: number, ctx?: Context<'TODO'>): _IntNumeralExpr<'TODO'>;
+    static from(a: CoercibleToExpr<'TODO'>, ctx?: Context<'TODO'>): _Expr<'TODO'>;
+    static from(a: CoercibleToExpr<'TODO'>, ctx = mainCtx()): _Expr<'TODO'> {
       if (typeof a === 'boolean') {
         return new BoolExpr((a ? Z3.mk_false : Z3.mk_true)(ctx.ptr), ctx);
       } else if (typeof a === 'number') {
@@ -520,21 +533,21 @@ export function makeAPI(Z3: Z3): API {
       }
     }
 
-    eq(other: CoercibleToExpr) {
+    eq(other: CoercibleToExpr<'TODO'>) {
       let [a, b] = coerceExprs([this, other]);
       let eq = Z3.mk_eq(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(eq, this.ctx);
     }
 
-    neq(other: CoercibleToExpr) {
+    neq(other: CoercibleToExpr<'TODO'>) {
       let [a, b] = coerceExprs([this, other]);
       let distinct = Z3.mk_distinct(this.ctx.ptr, [a.ptr, b.ptr]);
       throwIfError(this.ctx);
       return new BoolExpr(distinct, this.ctx);
     }
 
-    sort(): Sort {
+    sort(): Sort<'TODO'> {
       throw new Error(`unimplemented: sort on ${this.constructor.name}`);
     }
 
@@ -556,7 +569,7 @@ export function makeAPI(Z3: Z3): API {
       return out;
     }
 
-    arg(idx: number): Expr {
+    arg(idx: number): _Expr<'TODO'> {
       if (!isApp(this)) {
         throw new Error('arg called on non-app');
       }
@@ -565,7 +578,7 @@ export function makeAPI(Z3: Z3): API {
       return astPtrToExpr(ptr, this.ctx);
     }
 
-    children(): Expr[] {
+    children(): _Expr<'TODO'>[] {
       if (!isApp(this)) {
         return [];
       }
@@ -576,12 +589,13 @@ export function makeAPI(Z3: Z3): API {
       }
       return out;
     }
-  }
+  };
 
-  class ArithExpr extends Expr {
-    declare __brand: 'ArithExpr' | IntNumeralExpr['__brand'] | BoolExpr['__brand'];
+  type _ArithExpr<ContextName extends string> = ArithExpr<ContextName>;
+  const ArithExpr = class ArithExpr extends Expr {
+    declare __brand: 'ArithExpr' | IntNumeralExpr<'TODO'>['__brand'] | BoolExpr<'TODO'>['__brand'];
 
-    sort(): Sort {
+    sort(): Sort<'TODO'> {
       let sort = Z3.get_sort(this.ctx.ptr, this.ptr);
       throwIfError(this.ctx);
       return new ArithSort(sort, this.ctx);
@@ -593,78 +607,78 @@ export function makeAPI(Z3: Z3): API {
       return new ArithExpr(r, this.ctx);
     }
 
-    add(other: _ArithExpr | number) {
+    add(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_add(this.ctx.ptr, [a.ptr, b.ptr]);
       throwIfError(this.ctx);
       return new ArithExpr(r, this.ctx);
     }
 
-    sub(other: _ArithExpr | number) {
+    sub(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_sub(this.ctx.ptr, [a.ptr, b.ptr]);
       throwIfError(this.ctx);
       return new ArithExpr(r, this.ctx);
     }
 
-    mul(other: _ArithExpr | number) {
+    mul(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_mul(this.ctx.ptr, [a.ptr, b.ptr]);
       throwIfError(this.ctx);
       return new ArithExpr(r, this.ctx);
     }
 
-    div(other: _ArithExpr | number) {
+    div(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_div(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new ArithExpr(r, this.ctx);
     }
 
-    mod(other: _ArithExpr | number) {
+    mod(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_mod(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new ArithExpr(r, this.ctx);
     }
 
-    pow(other: _ArithExpr | number) {
+    pow(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_power(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new ArithExpr(r, this.ctx);
     }
 
-    le(other: _ArithExpr | number) {
+    le(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_le(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    lt(other: _ArithExpr | number) {
+    lt(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_lt(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    ge(other: _ArithExpr | number) {
+    ge(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_ge(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    gt(other: _ArithExpr | number) {
+    gt(other: _ArithExpr<'TODO'> | number) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_gt(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
-  }
+  };
 
-  class IntNumeralExpr extends ArithExpr {
+  const IntNumeralExpr = class IntNumeralExpr extends ArithExpr {
     declare __brand: 'IntNumeralExpr';
 
     toString() {
@@ -672,9 +686,9 @@ export function makeAPI(Z3: Z3): API {
       throwIfError(this.ctx);
       return out;
     }
-  }
+  };
 
-  class BoolExpr extends ArithExpr {
+  const BoolExpr = class BoolExpr extends ArithExpr {
     declare __brand: 'BoolExpr';
 
     sort() {
@@ -689,43 +703,43 @@ export function makeAPI(Z3: Z3): API {
       return new BoolExpr(r, this.ctx);
     }
 
-    iff(other: _BoolExpr | boolean) {
+    iff(other: _BoolExpr<'TODO'> | boolean) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_iff(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    implies(other: _BoolExpr | boolean) {
+    implies(other: _BoolExpr<'TODO'> | boolean) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_implies(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    xor(other: _BoolExpr | boolean) {
+    xor(other: _BoolExpr<'TODO'> | boolean) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_xor(this.ctx.ptr, a.ptr, b.ptr);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    and(other: _BoolExpr | boolean) {
+    and(other: _BoolExpr<'TODO'> | boolean) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_and(this.ctx.ptr, [a.ptr, b.ptr]);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
 
-    or(other: _BoolExpr | boolean) {
+    or(other: _BoolExpr<'TODO'> | boolean) {
       let [a, b] = coerceExprs([this, other]);
       let r = Z3.mk_or(this.ctx.ptr, [a.ptr, b.ptr]);
       throwIfError(this.ctx);
       return new BoolExpr(r, this.ctx);
     }
-  }
+  };
 
-  class Sort extends AST {
+  let Sort: SortCtor<'TODO'> = class Sort extends AST {
     declare __brand: 'Sort' | ArithSort['__brand'];
 
     declare ptr: Z3_sort;
@@ -738,7 +752,7 @@ export function makeAPI(Z3: Z3): API {
       throwIfError(this.ctx);
       return out;
     }
-  }
+  };
 
   class ArithSort extends Sort {
     declare __brand: 'ArithSort' | BoolSort['__brand'] | IntSort['__brand'];
@@ -775,7 +789,7 @@ export function makeAPI(Z3: Z3): API {
     }
   }
 
-  function symbolToJsValue(ctx: Context, s: Z3_symbol) {
+  function symbolToJsValue(ctx: Context<'TODO'>, s: Z3_symbol) {
     let kind = Z3.get_symbol_kind(ctx.ptr, s);
     throwIfError(ctx);
     if (kind === Z3_symbol_kind.Z3_INT_SYMBOL) {
@@ -789,20 +803,20 @@ export function makeAPI(Z3: Z3): API {
     }
   }
 
-  function isApp(a: Expr) {
+  function isApp(a: Expr<'TODO'>) {
     let kind = a.astKind();
     return kind == Z3_ast_kind.Z3_NUMERAL_AST || kind == Z3_ast_kind.Z3_APP_AST;
   }
 
-  let isConst = (a: Expr) => isApp(a) && a.numArgs() === 0;
+  let isConst = (a: Expr<'TODO'>) => isApp(a) && a.numArgs() === 0;
 
-  function isAsArray(n: Expr) {
+  function isAsArray(n: Expr<'TODO'>) {
     let out = Z3.is_as_array(n.ctx.ptr, n.ptr);
     throwIfError(n.ctx);
     return out;
   }
 
-  function astPtrToExpr(a: Z3_ast, ctx: Context): ArithExpr {
+  function astPtrToExpr(a: Z3_ast, ctx: Context<'TODO'>): ArithExpr<'TODO'> {
     let k = Z3.get_ast_kind(ctx.ptr, a);
     throwIfError(ctx);
     let sort = Z3.get_sort(ctx.ptr, a);
@@ -822,7 +836,7 @@ export function makeAPI(Z3: Z3): API {
     throw new Error(`unknown sort kind ${sk}`);
   }
 
-  function coerceExprs(exprs: CoercibleToExpr[], ctx?: Context | null) {
+  function coerceExprs(exprs: CoercibleToExpr<'TODO'>[], ctx?: Context<'TODO'> | null) {
     if (exprs.length === 0) {
       return [];
     }
@@ -851,13 +865,13 @@ export function makeAPI(Z3: Z3): API {
     throw new Error(`unimplemented: toIntStr for ${typeof val}`);
   }
 
-  function contextFromArgs(args: CoercibleToExpr[]): Context | null {
-    let ctx: Context | null = null;
+  function contextFromArgs(args: CoercibleToExpr<'TODO'>[]): Context<'TODO'> | null {
+    let ctx: Context<'TODO'> | null = null;
     for (let a of args) {
       if (a instanceof AST /* || is_probe(a) */) {
         if (ctx == null) {
-          ctx = (a as AST).ctx;
-        } else if (ctx !== (a as AST).ctx) {
+          ctx = (a as AST<'TODO'>).ctx;
+        } else if (ctx !== (a as AST<'TODO'>).ctx) {
           throw new Error('args are from different contexts');
         }
       }
@@ -883,7 +897,7 @@ export function makeAPI(Z3: Z3): API {
     return new BoolExpr(c, ctx);
   }
 
-  function Distinct(...args: CoercibleToExpr[]) {
+  function Distinct(...args: CoercibleToExpr<'TODO'>[]) {
     let ctx = contextFromArgs(args);
     if (ctx == null) {
       throw new Error('at least one argument to Distinct must be a Z3 expression');
@@ -897,7 +911,7 @@ export function makeAPI(Z3: Z3): API {
     return new BoolExpr(d, ctx);
   }
 
-  function If(test: _BoolExpr, consequent: _ArithExpr, alternate: _ArithExpr) {
+  function If(test: BoolExpr<'TODO'>, consequent: ArithExpr<'TODO'>, alternate: ArithExpr<'TODO'>) {
     let ctx = contextFromArgs([test, consequent, alternate])!;
     let ite = Z3.mk_ite(ctx.ptr, test.ptr, consequent.ptr, alternate.ptr);
     throwIfError(ctx);
