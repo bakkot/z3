@@ -281,7 +281,7 @@ type Z3 = Awaited<ReturnType<typeof import('../build/wrapper')['init']>>['Z3'];
 export function makeAPI(
   Z3: Z3,
 ): <ContextName extends string>(name: ContextName) => API<ContextName> {
-  return <ContextName extends string>(name: ContextName) => {
+  return <ContextName extends string>(contextName: ContextName) => {
     // @ts-ignore I promise FinalizationRegistry is a thing
     let cleanupRegistry = new FinalizationRegistry<() => void>(thunk => {
       // console.log('cleaning up');
@@ -295,11 +295,19 @@ export function makeAPI(
       }
     }
 
+    function enforceContextConsistency(a: { ctx: { name: string } }) {
+      if (a.ctx !== ctx) {
+        throw new Error(
+          `contexts do not match: attempting to use value from context ${a.ctx.name} with class from context ${contextName}`,
+        );
+      }
+    }
+
     // we use `const X = class X` everywhere to avoid shadowing the `X` type in the primary scope
     const Context = class Context {
       declare __brand: 'Context';
       declare ptr: Z3_context;
-      name: ContextName = name;
+      name: ContextName = contextName;
       constructor() {
         let conf = Z3.mk_config();
         Z3.set_param_value(conf, 'auto_config', 'true');
@@ -334,6 +342,7 @@ export function makeAPI(
       }
 
       assertExprs(...args: BoolExpr<ContextName>[]) {
+        args.forEach(enforceContextConsistency);
         for (let arg of args) {
           Z3.solver_assert(ctx.ptr, this.ptr, arg.ptr);
           throwIfError();
@@ -341,6 +350,7 @@ export function makeAPI(
       }
 
       async check(...assumptions: BoolExpr<ContextName>[]) {
+        assumptions.forEach(enforceContextConsistency);
         let r = await Z3.solver_check_assumptions(
           ctx.ptr,
           this.ptr,
@@ -414,6 +424,7 @@ export function makeAPI(
       }
 
       getInterp(decl: FuncDecl<ContextName>): Expr<ContextName> | FuncInterp<ContextName> | null {
+        enforceContextConsistency(decl);
         if (decl.arity() === 0) {
           let _r = Z3.model_get_const_interp(ctx.ptr, this.ptr, decl.ptr);
           throwIfError();
@@ -437,6 +448,7 @@ export function makeAPI(
       }
 
       evaluate(t: Expr<ContextName>, modelCompletion = false) {
+        enforceContextConsistency(t);
         let out = Z3.model_eval(ctx.ptr, this.ptr, t.ptr, modelCompletion);
         throwIfError();
         if (out == null) {
@@ -536,9 +548,10 @@ export function makeAPI(
           return new IntNumeralExpr(numeral);
         } else if (a instanceof Expr) {
           return a;
-        } else if (typeof a === 'object' && typeof a.ctx === 'object' && a.ctx !== ctx) {
-          throw new Error(`Attempting to use Expr.from with a value from a different context`);
         } else {
+          if (typeof a === 'object' && typeof a.ctx === 'object') {
+            enforceContextConsistency(a);
+          }
           throw new Error(`unimplemented: Expr.from support for ${typeof a}`);
         }
       }
@@ -762,6 +775,7 @@ export function makeAPI(
       }
 
       eq(other: Sort) {
+        enforceContextConsistency(other);
         let out = Z3.is_eq_sort(ctx.ptr, this.ptr, other.ptr);
         throwIfError();
         return out;
@@ -821,6 +835,7 @@ export function makeAPI(
     }
 
     function isApp(a: Expr<ContextName>) {
+      enforceContextConsistency(a);
       let kind = a.astKind();
       return kind == Z3_ast_kind.Z3_NUMERAL_AST || kind == Z3_ast_kind.Z3_APP_AST;
     }
@@ -828,7 +843,8 @@ export function makeAPI(
     let isConst = (a: Expr<ContextName>) => isApp(a) && a.numArgs() === 0;
 
     function isAsArray(n: Expr<ContextName>) {
-      let out = Z3.is_as_array(n.ctx.ptr, n.ptr);
+      enforceContextConsistency(n);
+      let out = Z3.is_as_array(ctx.ptr, n.ptr);
       throwIfError();
       return out;
     }
