@@ -82,9 +82,10 @@ Because we want classes to be generic, we are basically forced to use interfaces
 TypeScript does not have a way to refer to the type of a generic class, so we have to use interfaces.
 https://github.com/microsoft/TypeScript/issues/49234
 
-Extending an interface only adds methods, rather than replacing them, so we can't extension for interface which defines the constructor.
+Extending an interface only adds methods, rather than replacing them, so we can't use extension for the interface which defines the constructor.
 But we still want derived clases to inherit static methods.
 So we need seperate interfaces for the constructor, for other static methods, and for the prototype/instances.
+
 
 ## FinalizationRegistry
 
@@ -923,7 +924,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
     }
 
     function If(test: BoolExpr<ContextName>, consequent: ArithExpr<ContextName>, alternate: ArithExpr<ContextName>) {
-      // TODO checks for context equality, here and elsewhere
+      [test, consequent, alternate].forEach(enforceContextConsistency);
       let ite = Z3.mk_ite(ctx.ptr, test.ptr, consequent.ptr, alternate.ptr);
       throwIfError();
       return new ArithExpr(ite);
