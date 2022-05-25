@@ -328,14 +328,14 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
     const Solver = class Solver {
       declare __brand: _Solver<ContextName>['__brand'];
 
-      declare ctx: Context<ContextName>;
       declare ptr: Z3_solver;
+      declare ctx: Context<ContextName>;
       constructor() {
         let solver = Z3.mk_solver(ctx.ptr);
         Z3.solver_inc_ref(ctx.ptr, solver);
 
-        this.ctx = ctx;
         this.ptr = solver;
+        this.ctx = ctx;
         cleanupRegistry.register(this, () => Z3.solver_dec_ref(ctx.ptr, solver));
       }
 
