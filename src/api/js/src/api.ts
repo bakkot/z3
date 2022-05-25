@@ -96,13 +96,13 @@ In particular, as used below, the callback must not refer to `this`.
 
 */
 
-interface Context<ContextName extends string> {
+interface Context<ContextName extends string = 'main'> {
   __brand: 'Context';
   name: ContextName;
   readonly ptr: Z3_context;
 }
 
-export interface Solver<ContextName extends string> {
+export interface Solver<ContextName extends string = 'main'> {
   __brand: 'Solver';
   readonly ptr: Z3_solver;
   add: (...args: BoolExpr<ContextName>[]) => void;
@@ -112,11 +112,11 @@ export interface Solver<ContextName extends string> {
   help: () => string;
   toString: () => string;
 }
-export interface SolverCtor<ContextName extends string> {
+export interface SolverCtor<ContextName extends string = 'main'> {
   new (): Solver<ContextName>;
 }
 
-export interface Model<ContextName extends string> extends Iterable<FuncDecl<ContextName>> {
+export interface Model<ContextName extends string = 'main'> extends Iterable<FuncDecl<ContextName>> {
   __brand: 'Model';
   readonly ptr: Z3_model;
   length: () => number;
@@ -124,20 +124,20 @@ export interface Model<ContextName extends string> extends Iterable<FuncDecl<Con
   getInterp: (decl: FuncDecl<ContextName>) => Expr<ContextName> | FuncInterp<ContextName> | null;
   evaluate: (t: Expr<ContextName>, modelCompletion?: boolean) => ArithExpr<ContextName>;
 }
-export interface ModelCtor<ContextName extends string> {
+export interface ModelCtor<ContextName extends string = 'main'> {
   new (m: Z3_model): Model<ContextName>;
 }
 
-export interface FuncInterp<ContextName extends string> {
+export interface FuncInterp<ContextName extends string = 'main'> {
   __brand: 'FuncInterp';
   readonly ptr: Z3_func_interp;
   readonly ctx: Context<ContextName>;
 }
-export interface FuncInterpCtor<ContextName extends string> {
+export interface FuncInterpCtor<ContextName extends string = 'main'> {
   new (f: Z3_func_interp): FuncInterp<ContextName>;
 }
 
-export interface AST<ContextName extends string> {
+export interface AST<ContextName extends string = 'main'> {
   __brand:
     | 'AST'
     | FuncDecl<ContextName>['__brand']
@@ -148,23 +148,23 @@ export interface AST<ContextName extends string> {
   toString: () => string;
   astKind: () => Z3_ast_kind;
 }
-export interface ASTCtor<ContextName extends string> {
+export interface ASTCtor<ContextName extends string = 'main'> {
   new (ast: Z3_ast): AST<ContextName>;
 }
 
-export interface FuncDecl<ContextName extends string> extends AST<ContextName> {
+export interface FuncDecl<ContextName extends string = 'main'> extends AST<ContextName> {
   __brand: 'FuncDecl';
   readonly ptr: Z3_func_decl;
   arity: () => number;
   name: () => string;
   declKind: () => Z3_decl_kind;
 }
-export interface FuncDeclCtor<ContextName extends string> {
+export interface FuncDeclCtor<ContextName extends string = 'main'> {
   // TODO it would be good to have specialized sub-types for the AST pointers
   new (ast: Z3_ast): FuncDecl<ContextName>;
 }
 
-export interface Expr<ContextName extends string> extends AST<ContextName> {
+export interface Expr<ContextName extends string = 'main'> extends AST<ContextName> {
   __brand: 'Expr' | ArithExpr<ContextName>['__brand'];
   eq: (other: CoercibleToExpr<ContextName>) => BoolExpr<ContextName>;
   neq: (other: CoercibleToExpr<ContextName>) => BoolExpr<ContextName>;
@@ -174,16 +174,16 @@ export interface Expr<ContextName extends string> extends AST<ContextName> {
   arg: (idx: number) => Expr<ContextName>;
   children: () => Expr<ContextName>[];
 }
-export interface ExprStatics<ContextName extends string> {
+export interface ExprStatics<ContextName extends string = 'main'> {
   from(a: boolean): BoolExpr<ContextName>;
   from(a: number): IntNumeralExpr<ContextName>;
   from(a: CoercibleToExpr<ContextName>): Expr<ContextName>;
 }
-export interface ExprCtor<ContextName extends string> extends ExprStatics<ContextName> {
+export interface ExprCtor<ContextName extends string = 'main'> extends ExprStatics<ContextName> {
   new (ast: Z3_ast): Expr<ContextName>;
 }
 
-export interface ArithExpr<ContextName extends string> extends Expr<ContextName> {
+export interface ArithExpr<ContextName extends string = 'main'> extends Expr<ContextName> {
   __brand: 'ArithExpr' | IntNumeralExpr<ContextName>['__brand'] | BoolExpr<ContextName>['__brand'];
   neg: () => ArithExpr<ContextName>;
   add: (other: ArithExpr<ContextName> | number) => ArithExpr<ContextName>;
@@ -198,22 +198,22 @@ export interface ArithExpr<ContextName extends string> extends Expr<ContextName>
   gt: (other: ArithExpr<ContextName> | number) => BoolExpr<ContextName>;
   toString: () => string;
 }
-export interface ArithExprStatics<ContextName extends string> extends ExprStatics<ContextName> {}
-export interface ArithExprCtor<ContextName extends string> extends ArithExprStatics<ContextName> {
+export interface ArithExprStatics<ContextName extends string = 'main'> extends ExprStatics<ContextName> {}
+export interface ArithExprCtor<ContextName extends string = 'main'> extends ArithExprStatics<ContextName> {
   new (ast: Z3_ast): ArithExpr<ContextName>;
 }
 
-export interface IntNumeralExpr<ContextName extends string> extends ArithExpr<ContextName> {
+export interface IntNumeralExpr<ContextName extends string = 'main'> extends ArithExpr<ContextName> {
   __brand: 'IntNumeralExpr';
 }
-export interface IntNumeralExprStatics<ContextName extends string>
+export interface IntNumeralExprStatics<ContextName extends string = 'main'>
   extends ArithExprStatics<ContextName> {}
-export interface IntNumeralExprCtor<ContextName extends string>
+export interface IntNumeralExprCtor<ContextName extends string = 'main'>
   extends IntNumeralExprStatics<ContextName> {
   new (ast: Z3_ast): IntNumeralExpr<ContextName>;
 }
 
-export interface BoolExpr<ContextName extends string> extends ArithExpr<ContextName> {
+export interface BoolExpr<ContextName extends string = 'main'> extends ArithExpr<ContextName> {
   __brand: 'BoolExpr';
   not: () => BoolExpr<ContextName>;
   iff: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
@@ -222,46 +222,46 @@ export interface BoolExpr<ContextName extends string> extends ArithExpr<ContextN
   and: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
   or: (other: BoolExpr<ContextName> | boolean) => BoolExpr<ContextName>;
 }
-export interface BoolExprStatics<ContextName extends string>
+export interface BoolExprStatics<ContextName extends string = 'main'>
   extends ArithExprStatics<ContextName> {}
-export interface BoolExprCtor<ContextName extends string> extends BoolExprStatics<ContextName> {
+export interface BoolExprCtor<ContextName extends string = 'main'> extends BoolExprStatics<ContextName> {
   new (ast: Z3_ast): BoolExpr<ContextName>;
 }
 
-export interface Sort<ContextName extends string> extends AST<ContextName> {
+export interface Sort<ContextName extends string = 'main'> extends AST<ContextName> {
   __brand: 'Sort' | BoolSort<ContextName>['__brand'] | ArithSort<ContextName>['__brand'];
   readonly ptr: Z3_sort;
   eq: (other: Sort<ContextName>) => boolean;
 }
-export interface SortCtor<ContextName extends string> {
+export interface SortCtor<ContextName extends string = 'main'> {
   new (ast: Z3_sort): Sort<ContextName>;
 }
 
-export interface ArithSort<ContextName extends string> extends Sort<ContextName> {
+export interface ArithSort<ContextName extends string = 'main'> extends Sort<ContextName> {
   __brand: 'ArithSort' | IntSort<ContextName>['__brand'];
 }
-export interface ArithSortCtor<ContextName extends string> {
+export interface ArithSortCtor<ContextName extends string = 'main'> {
   new (ast: Z3_ast): ArithSort<ContextName>;
 }
 
 // todo why does this not extend ArithSort?
-export interface BoolSort<ContextName extends string> extends Sort<ContextName> {
+export interface BoolSort<ContextName extends string = 'main'> extends Sort<ContextName> {
   __brand: 'BoolSort';
 }
-export interface BoolSortCtor<ContextName extends string> {
+export interface BoolSortCtor<ContextName extends string = 'main'> {
   new (ast: Z3_ast): BoolSort<ContextName>;
 }
 
-export interface IntSort<ContextName extends string> extends ArithSort<ContextName> {
+export interface IntSort<ContextName extends string = 'main'> extends ArithSort<ContextName> {
   __brand: 'IntSort';
 }
-export interface IntSortCtor<ContextName extends string> {
+export interface IntSortCtor<ContextName extends string = 'main'> {
   new (ast: Z3_ast): IntSort<ContextName>;
 }
 
-export type CoercibleToExpr<ContextName extends string> = boolean | number | Expr<ContextName>;
+export type CoercibleToExpr<ContextName extends string = 'main'> = boolean | number | Expr<ContextName>;
 
-type API<ContextName extends string> = {
+type API<ContextName extends string = 'main'> = {
   Solver: SolverCtor<ContextName>;
   Model: ModelCtor<ContextName>;
   Expr: ExprCtor<ContextName>;
@@ -529,7 +529,7 @@ export function makeAPI(
       }
     };
 
-    type _Expr<ContextName extends string> = Expr<ContextName>;
+    type _Expr<ContextName extends string = 'main'> = Expr<ContextName>;
     const Expr = class Expr extends AST {
       declare __brand: 'Expr' | ArithExpr<ContextName>['__brand'];
 
@@ -614,7 +614,7 @@ export function makeAPI(
       }
     };
 
-    type _ArithExpr<ContextName extends string> = ArithExpr<ContextName>;
+    type _ArithExpr<ContextName extends string = 'main'> = ArithExpr<ContextName>;
     const ArithExpr = class ArithExpr extends Expr {
       declare __brand:
         | 'ArithExpr'
@@ -714,7 +714,7 @@ export function makeAPI(
       }
     };
 
-    type _BoolExpr<ContextName extends string> = BoolExpr<ContextName>;
+    type _BoolExpr<ContextName extends string = 'main'> = BoolExpr<ContextName>;
     const BoolExpr = class BoolExpr extends ArithExpr {
       declare __brand: 'BoolExpr';
 

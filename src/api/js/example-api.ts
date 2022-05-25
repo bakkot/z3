@@ -59,7 +59,7 @@ function parseSudoku(str: string) {
   let { createContext, em } = await init();
   let Z3 = createContext('main');
 
-  function addSudokuConstraints(solver: Solver<'main'>, cells: ArithExpr<'main'>[][]) {
+  function addSudokuConstraints(solver: Solver, cells: ArithExpr[][]) {
     // the usual constraints:
 
     // every square is between 1 and 9
