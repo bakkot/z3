@@ -324,8 +324,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
     };
     const ctx = new Context();
 
+    type _Solver<ContextName extends string> = Solver<ContextName>;
     const Solver = class Solver {
-      declare __brand: 'Solver';
+      declare __brand: _Solver<ContextName>['__brand'];
 
       declare ctx: Context<ContextName>;
       declare ptr: Z3_solver;
@@ -387,8 +388,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
+    type _Model<ContextName extends string> = Model<ContextName>;
     const Model = class Model {
-      declare __brand: 'Model';
+      declare __brand: _Model<ContextName>['__brand'];
 
       declare ptr: Z3_model;
       declare ctx: Context<ContextName>;
@@ -459,8 +461,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
+    type _FuncInterp<ContextName extends string> = FuncInterp<ContextName>;
     const FuncInterp = class FuncInterp {
-      declare __brand: 'FuncInterp';
+      declare __brand: _FuncInterp<ContextName>['__brand'];
 
       declare ptr: Z3_func_interp;
       declare ctx: Context<ContextName>;
@@ -470,12 +473,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
+    type _AST<ContextName extends string> = AST<ContextName>;
     const AST = class AST {
-      declare __brand:
-        | 'AST'
-        | FuncDecl<ContextName>['__brand']
-        | Expr<ContextName>['__brand']
-        | Sort<ContextName>['__brand'];
+      declare __brand: _AST<ContextName>['__brand'];
 
       declare ptr: Z3_ast;
       declare ctx: Context<ContextName>;
@@ -503,8 +503,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
+    type _FuncDecl<ContextName extends string> = FuncDecl<ContextName>;
     const FuncDecl = class FuncDecl extends AST {
-      declare __brand: 'FuncDecl';
+      declare __brand: _FuncDecl<ContextName>['__brand'];
 
       declare ptr: Z3_func_decl;
       constructor(ast: Z3_func_decl) {
@@ -530,9 +531,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    type _Expr<ContextName extends string = 'main'> = Expr<ContextName>;
+    type _Expr<ContextName extends string> = Expr<ContextName>;
     const Expr = class Expr extends AST {
-      declare __brand: 'Expr' | ArithExpr<ContextName>['__brand'];
+      declare __brand: _Expr<ContextName>['__brand'];
 
       static from(a: boolean): BoolExpr<ContextName>;
       static from(a: number): IntNumeralExpr<ContextName>;
@@ -617,7 +618,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
 
     type _ArithExpr<ContextName extends string = 'main'> = ArithExpr<ContextName>;
     const ArithExpr = class ArithExpr extends Expr {
-      declare __brand: 'ArithExpr' | IntNumeralExpr<ContextName>['__brand'] | BoolExpr<ContextName>['__brand'];
+      declare __brand: _ArithExpr<ContextName>['__brand'];
 
       sort(): Sort<ContextName> {
         let sort = Z3.get_sort(ctx.ptr, this.ptr);
@@ -702,8 +703,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
+    type _IntNumeralExpr<ContextName extends string = 'main'> = IntNumeralExpr<ContextName>;
     const IntNumeralExpr = class IntNumeralExpr extends ArithExpr {
-      declare __brand: 'IntNumeralExpr';
+      declare __brand: _IntNumeralExpr<ContextName>['__brand'];
 
       toString() {
         let out = Z3.get_numeral_string(ctx.ptr, this.ptr);
@@ -714,7 +716,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
 
     type _BoolExpr<ContextName extends string = 'main'> = BoolExpr<ContextName>;
     const BoolExpr = class BoolExpr extends ArithExpr {
-      declare __brand: 'BoolExpr';
+      declare __brand: _BoolExpr<ContextName>['__brand'];
 
       sort() {
         let sort = Z3.get_sort(ctx.ptr, this.ptr);
@@ -764,8 +766,9 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    let Sort: SortCtor<ContextName> = class Sort extends AST {
-      declare __brand: 'Sort' | ArithSort['__brand'];
+    type _Sort<ContextName extends string = 'main'> = Sort<ContextName>;
+    const Sort: SortCtor<ContextName> = class Sort extends AST {
+      declare __brand: _Sort<ContextName>['__brand'];
 
       declare ptr: Z3_sort;
       constructor(sort: Z3_sort) {
@@ -780,28 +783,31 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    class ArithSort extends Sort {
-      declare __brand: 'ArithSort' | BoolSort['__brand'] | IntSort['__brand'];
-    }
+    type _ArithSort<ContextName extends string = 'main'> = ArithSort<ContextName>;
+    const ArithSort = class ArithSort extends Sort {
+      declare __brand: _ArithSort<ContextName>['__brand'];
+    };
 
     // TODO maybe just have a single BoolSort value?
-    class BoolSort extends Sort {
-      declare __brand: 'BoolSort';
+    type _BoolSort<ContextName extends string = 'main'> = BoolSort<ContextName>;
+    const BoolSort = class BoolSort extends Sort {
+      declare __brand: _BoolSort<ContextName>['__brand'];
 
       // TODO why does this exist
       static from(sort = Z3.mk_bool_sort(ctx.ptr)) {
         return new BoolSort(sort);
       }
-    }
+    };
 
-    class IntSort extends Sort {
-      declare __brand: 'IntSort';
+    type _IntSort<ContextName extends string = 'main'> = IntSort<ContextName>;
+    const IntSort = class IntSort extends Sort {
+      declare __brand: _IntSort<ContextName>['__brand'];
 
       // TODO why does this exist
       static from(sort = Z3.mk_int_sort(ctx.ptr)) {
         return new IntSort(sort);
       }
-    }
+    };
 
     function jsValueToSymbol(s: number | string) {
       if (typeof s === 'number') {
