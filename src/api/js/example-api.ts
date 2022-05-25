@@ -57,6 +57,10 @@ function parseSudoku(str: string) {
 
 (async () => {
   let { createContext, em } = await init();
+
+  // if you use 'main' as your context name, you won't need to name it in types like Solver
+  // if you're creating multiple contexts, give them different names
+  // then the type system will prevent you from mixing them
   let Z3 = createContext('main');
 
   function addSudokuConstraints(solver: Solver, cells: ArithExpr[][]) {
@@ -106,7 +110,7 @@ function parseSudoku(str: string) {
     return out;
   }
 
-  function addMiracleConstraints(s: Solver<'main'>, cells: ArithExpr<'main'>[][]) {
+  function addMiracleConstraints(s: Solver, cells: ArithExpr[][]) {
     // the special "miracle sudoku" constraints
 
     // any two cells separated by a knight's move or a kings move cannot contain the same digit
