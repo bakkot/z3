@@ -427,11 +427,11 @@ export async function init(initModule: any) {
       .filter(f => f != null)
       .join(',\n')}
   };
-  const API = makeAPI(Z3);
+  const createContext = makeAPI(Z3);
   return {
     em: Mod,
     Z3,
-    API,
+    createContext,
   };
 }
 `;

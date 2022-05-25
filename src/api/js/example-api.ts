@@ -56,9 +56,10 @@ function parseSudoku(str: string) {
 }
 
 (async () => {
-  let { API: Z3, em } = await init();
+  let { createContext, em } = await init();
+  let Z3 = createContext('main');
 
-  function addSudokuConstraints(solver: Solver<'TODO'>, cells: ArithExpr<'TODO'>[][]) {
+  function addSudokuConstraints(solver: Solver<'main'>, cells: ArithExpr<'main'>[][]) {
     // the usual constraints:
 
     // every square is between 1 and 9
@@ -105,7 +106,7 @@ function parseSudoku(str: string) {
     return out;
   }
 
-  function addMiracleConstraints(s: Solver<'TODO'>, cells: ArithExpr<'TODO'>[][]) {
+  function addMiracleConstraints(s: Solver<'main'>, cells: ArithExpr<'main'>[][]) {
     // the special "miracle sudoku" constraints
 
     // any two cells separated by a knight's move or a kings move cannot contain the same digit
