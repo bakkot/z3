@@ -545,7 +545,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
           if (Math.floor(a) !== a || !Number.isFinite(a)) {
             throw new Error('unimplemented: Expr.from support for non-integer values');
           }
-          let numeral = Z3.mk_numeral(ctx.ptr, toIntStr(a), IntSort.from().ptr);
+          let numeral = Z3.mk_numeral(ctx.ptr, toIntStr(a), IntSort.INSTANCE.ptr);
           throwIfError();
           return new IntNumeralExpr(numeral);
         } else if (a instanceof Expr) {
@@ -616,7 +616,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    type _ArithExpr<ContextName extends string = 'main'> = ArithExpr<ContextName>;
+    type _ArithExpr<ContextName extends string> = ArithExpr<ContextName>;
     const ArithExpr = class ArithExpr extends Expr {
       declare __brand: _ArithExpr<ContextName>['__brand'];
 
@@ -703,7 +703,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    type _IntNumeralExpr<ContextName extends string = 'main'> = IntNumeralExpr<ContextName>;
+    type _IntNumeralExpr<ContextName extends string> = IntNumeralExpr<ContextName>;
     const IntNumeralExpr = class IntNumeralExpr extends ArithExpr {
       declare __brand: _IntNumeralExpr<ContextName>['__brand'];
 
@@ -714,7 +714,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    type _BoolExpr<ContextName extends string = 'main'> = BoolExpr<ContextName>;
+    type _BoolExpr<ContextName extends string> = BoolExpr<ContextName>;
     const BoolExpr = class BoolExpr extends ArithExpr {
       declare __brand: _BoolExpr<ContextName>['__brand'];
 
@@ -766,7 +766,7 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    type _Sort<ContextName extends string = 'main'> = Sort<ContextName>;
+    type _Sort<ContextName extends string> = Sort<ContextName>;
     const Sort: SortCtor<ContextName> = class Sort extends AST {
       declare __brand: _Sort<ContextName>['__brand'];
 
@@ -783,30 +783,21 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
       }
     };
 
-    type _ArithSort<ContextName extends string = 'main'> = ArithSort<ContextName>;
+    type _ArithSort<ContextName extends string> = ArithSort<ContextName>;
     const ArithSort = class ArithSort extends Sort {
       declare __brand: _ArithSort<ContextName>['__brand'];
     };
 
-    // TODO maybe just have a single BoolSort value?
-    type _BoolSort<ContextName extends string = 'main'> = BoolSort<ContextName>;
+    type _BoolSort<ContextName extends string> = BoolSort<ContextName>;
     const BoolSort = class BoolSort extends Sort {
       declare __brand: _BoolSort<ContextName>['__brand'];
-
-      // TODO why does this exist
-      static from(sort = Z3.mk_bool_sort(ctx.ptr)) {
-        return new BoolSort(sort);
-      }
+      static INSTANCE = new BoolSort(Z3.mk_int_sort(ctx.ptr));
     };
 
-    type _IntSort<ContextName extends string = 'main'> = IntSort<ContextName>;
+    type _IntSort<ContextName extends string> = IntSort<ContextName>;
     const IntSort = class IntSort extends Sort {
       declare __brand: _IntSort<ContextName>['__brand'];
-
-      // TODO why does this exist
-      static from(sort = Z3.mk_int_sort(ctx.ptr)) {
-        return new IntSort(sort);
-      }
+      static INSTANCE = new IntSort(Z3.mk_int_sort(ctx.ptr));
     };
 
     function jsValueToSymbol(s: number | string) {
@@ -902,19 +893,19 @@ export function makeAPI(Z3: Z3): <ContextName extends string>(name: ContextName)
     }
 
     function Int(name: string) {
-      let c = Z3.mk_const(ctx.ptr, jsValueToSymbol(name), IntSort.from().ptr);
+      let c = Z3.mk_const(ctx.ptr, jsValueToSymbol(name), IntSort.INSTANCE.ptr);
       throwIfError();
       return new ArithExpr(c);
     }
 
     function FreshInt(name: string) {
-      let c = Z3.mk_fresh_const(ctx.ptr, name, IntSort.from().ptr);
+      let c = Z3.mk_fresh_const(ctx.ptr, name, IntSort.INSTANCE.ptr);
       throwIfError();
       return new ArithExpr(c);
     }
 
     function Bool(name: string) {
-      let c = Z3.mk_const(ctx.ptr, jsValueToSymbol(name), BoolSort.from().ptr);
+      let c = Z3.mk_const(ctx.ptr, jsValueToSymbol(name), BoolSort.INSTANCE.ptr);
       throwIfError();
       return new BoolExpr(c);
     }
